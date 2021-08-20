@@ -1,7 +1,7 @@
 package main
 
-import "github.com/230delphi/go-any-proxy/anyproxy/anyproxy"
+import anyproxy "github.com/230delphi/go-any-proxy/anyproxy"
 
 func main() {
-	StartProxy(nil)
+	anyproxy.StartProxy(nil)
 }

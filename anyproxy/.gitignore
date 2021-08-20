@@ -6,6 +6,7 @@
 !make.bash
 !stats.go
 !sni.go
+!go.mod
 !COPYING
 !README*
 !builds/
