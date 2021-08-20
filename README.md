@@ -1,9 +1,20 @@
+This is a fork of the orignal version created by
+[[Ryan Chapman]]((https://github.com/ryanchapman/go-any-proxy)) which has been extended to support custom
+implementations of connections: for example logging all tcp sessions. Thanks to his work I've been able to progress
+further projects.
+
+- Rob August 2021
+
+<BR>
+
+--- Original ---
+
 [![Build Status](https://travis-ci.org/ryanchapman/go-any-proxy.png)](https://travis-ci.org/ryanchapman/go-any-proxy)
 
 # Any Proxy
 
-go-any-proxy is a server that can transparently proxy any tcp connection through an upstream proxy server.  This type
-of setup is common in corporate environments.  It is written in golang and has been load tested with 10,000 concurrent
+go-any-proxy is a server that can transparently proxy any tcp connection through an upstream proxy server. This type of
+setup is common in corporate environments. It is written in golang and has been load tested with 10,000 concurrent
 connections successfully on a Vyatta running a 64-bit kernel.
 
 ## Travis-CI
@@ -16,9 +27,9 @@ For more info, see http://blog.rchapman.org/post/47406142744/transparently-proxy
 
 ## Maintenance
 
-This project is actively maintained.  As of this writing (March 2019), I haven't had any bugs submitted in a few
-years, which is why you don't see much for code changing.  But be assured that I am watching the project and will
-address any bugs that come in.
+This project is actively maintained. As of this writing (March 2019), I haven't had any bugs submitted in a few years,
+which is why you don't see much for code changing. But be assured that I am watching the project and will address any
+bugs that come in.
 
 ## Authentication
 
@@ -37,11 +48,12 @@ $ ./make.bash
 You'll end up with a binary `any_proxy`
 
 ## Experimental Mac OS X support
-Fredrik Skogbreg has written the support for Mac OS X, but it is considered experimental until a load and performance
-test is completed.  To build the mac version, after cloning this repo with `git clone https://github.com/ryanchapman/go-any-proxy.git`, 
-change to the mac branch with `git checkout mac`, then make with `./make.bash`.  You'll need to configure some firewall
-rules in Mac OS X firewall, see issue #16 (https://github.com/ryanchapman/go-any-proxy/pull/16) for instructions.
 
+Fredrik Skogbreg has written the support for Mac OS X, but it is considered experimental until a load and performance
+test is completed. To build the mac version, after cloning this repo
+with `git clone https://github.com/ryanchapman/go-any-proxy.git`, change to the mac branch with `git checkout mac`, then
+make with `./make.bash`. You'll need to configure some firewall rules in Mac OS X firewall, see issue
+#16 (https://github.com/ryanchapman/go-any-proxy/pull/16) for instructions.
 
 -Ryan A. Chapman<br>
- Sun Nov  2 16:39:24 MST 2014
+Sun Nov 2 16:39:24 MST 2014

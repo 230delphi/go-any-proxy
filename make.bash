@@ -9,14 +9,14 @@ function make_version ()
     local timestamp=`date +%s`
     local builduser=`id -un`
     local buildhost=`hostname`
-cat <<vEOF >$BUILD_DIR/version.go
-package main
+cat <<vEOF >$BUILD_DIR/anygo/version.go
+package anygo
 
 const BUILDTIMESTAMP = $timestamp
 const BUILDUSER      = "$builduser"
 const BUILDHOST      = "$buildhost"
 vEOF
-    echo "Wrote $BUILD_DIR/version.go: timestamp=$timestamp; builduser=$builduser; buildhost=$buildhost"
+    echo "Wrote $BUILD_DIR/anygo/version.go: timestamp=$timestamp; builduser=$builduser; buildhost=$buildhost"
 }
 
 function pull_deps()
@@ -28,7 +28,8 @@ function pull_deps()
 function build ()
 {
     make_version
-    go build any_proxy.go sni.go stats.go version.go
+    go build anyproxy/any_proxy.go anyproxy/sni.go anyproxy/stats.go anyproxy/ProxyConnection.go
+    go build any_proxy.go version.go
     return $?
 }
 
