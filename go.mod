@@ -1,4 +1,4 @@
-module main
+module github.com/230delphi/go-any-proxy
 
 go 1.16
 
