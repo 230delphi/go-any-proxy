@@ -5,6 +5,8 @@
 !ProxyConnection.go
 !make.bash
 !stats.go
+!version.go
+!version_test.go
 !sni.go
 !go.mod
 !COPYING
