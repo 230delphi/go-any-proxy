@@ -211,7 +211,7 @@ func numProxyNoConnectResponses() uint64 {
 	return proxyNoConnectResponses.n
 }
 
-func incrProxyServerReadErr() {
+func IncrProxyServerReadErr() {
 	proxyServerReadErr.Lock()
 	proxyServerReadErr.n++
 	proxyServerReadErr.Unlock()
@@ -221,7 +221,7 @@ func numProxyServerReadErr() uint64 {
 	return proxyServerReadErr.n
 }
 
-func incrProxyServerWriteErr() {
+func IncrProxyServerWriteErr() {
 	proxyServerWriteErr.Lock()
 	proxyServerWriteErr.n++
 	proxyServerWriteErr.Unlock()
@@ -231,7 +231,7 @@ func numProxyServerWriteErr() uint64 {
 	return proxyServerWriteErr.n
 }
 
-func incrDirectServerReadErr() {
+func IncrDirectServerReadErr() {
 	directServerReadErr.Lock()
 	directServerReadErr.n++
 	directServerReadErr.Unlock()
@@ -241,7 +241,7 @@ func numDirectServerReadErr() uint64 {
 	return directServerReadErr.n
 }
 
-func incrDirectServerWriteErr() {
+func IncrDirectServerWriteErr() {
 	directServerWriteErr.Lock()
 	directServerWriteErr.n++
 	directServerWriteErr.Unlock()

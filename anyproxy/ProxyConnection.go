@@ -49,18 +49,18 @@ func (into *DirectProxyConnection) copyProxyConnection(dst io.ReadWriteCloser, s
 			}
 			if operr.Op == "read" {
 				if srcname == "proxyserver" {
-					incrProxyServerReadErr()
+					IncrProxyServerReadErr()
 				}
 				if srcname == "directserver" {
-					incrDirectServerReadErr()
+					IncrDirectServerReadErr()
 				}
 			}
 			if operr.Op == "write" {
 				if srcname == "proxyserver" {
-					incrProxyServerWriteErr()
+					IncrProxyServerWriteErr()
 				}
 				if srcname == "directserver" {
-					incrDirectServerWriteErr()
+					IncrDirectServerWriteErr()
 				}
 			}
 		}
@@ -101,18 +101,18 @@ func (into *LoggingProxyConnection) copyProxyConnection(dst io.ReadWriteCloser, 
 			}
 			if operr.Op == "read" {
 				if srcname == "proxyserver" {
-					incrProxyServerReadErr()
+					IncrProxyServerReadErr()
 				}
 				if srcname == "directserver" {
-					incrDirectServerReadErr()
+					IncrDirectServerReadErr()
 				}
 			}
 			if operr.Op == "write" {
 				if srcname == "proxyserver" {
-					incrProxyServerWriteErr()
+					IncrProxyServerWriteErr()
 				}
 				if srcname == "directserver" {
-					incrDirectServerWriteErr()
+					IncrDirectServerWriteErr()
 				}
 			}
 		}
