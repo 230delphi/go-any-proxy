@@ -1,4 +1,4 @@
-module main
+module anyproxy
 
 go 1.16
 
