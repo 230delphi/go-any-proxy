@@ -554,8 +554,8 @@ func handleDirectConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
 	}
 	log.Debugf("DIRECT|%v->%v|Connected to remote end", clientConn.RemoteAddr(), directConn.RemoteAddr())
 	incrDirectConnections()
-	go myProxyConnection.copyProxyConnection(clientConn, directConn, "client", "directserver")
-	go myProxyConnection.copyProxyConnection(directConn, clientConn, "directserver", "client")
+	go myProxyConnection.CopyProxyConnection(clientConn, directConn, "client", "directserver")
+	go myProxyConnection.CopyProxyConnection(directConn, clientConn, "directserver", "client")
 }
 
 func handleProxyConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
@@ -638,14 +638,14 @@ func handleProxyConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
 			log.Debugf("PROXY|%v->%v->%s:%d|Status from proxy=400 (Bad Request)", clientConn.RemoteAddr(), proxyConn.RemoteAddr(), ipv4, port)
 			log.Debugf("%v: Response from proxy=400", proxySpec)
 			incrProxy400Responses()
-			go myProxyConnection.copyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
+			go myProxyConnection.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
 			return
 		}
 		if strings.Contains(status, "301") || strings.Contains(status, "302") && gClientRedirects == 1 {
 			log.Debugf("PROXY|%v->%v->%s:%d|Status from proxy=%s (Redirect), relaying response to client", clientConn.RemoteAddr(), proxyConn.RemoteAddr(), ipv4, port, strconv.Quote(status))
 			incrProxy300Responses()
 			fmt.Fprintf(clientConn, status)
-			go myProxyConnection.copyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
+			go myProxyConnection.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
 			return
 		}
 		if strings.Contains(status, "200") == false {
@@ -670,8 +670,8 @@ func handleProxyConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
 		return
 	}
 	incrProxiedConnections()
-	go myProxyConnection.copyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
-	go myProxyConnection.copyProxyConnection(proxyConn, clientConn, "proxyserver", "client")
+	go myProxyConnection.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
+	go myProxyConnection.CopyProxyConnection(proxyConn, clientConn, "proxyserver", "client")
 }
 
 func handleConnection(clientConn *net.TCPConn) {

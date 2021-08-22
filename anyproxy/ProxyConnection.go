@@ -25,13 +25,13 @@ func getUniqueFilename(srcname string) string {
 }
 
 type ProxyConnection interface {
-	copyProxyConnection(io.ReadWriteCloser, io.ReadWriteCloser, string, string)
+	CopyProxyConnection(io.ReadWriteCloser, io.ReadWriteCloser, string, string)
 }
 type DirectProxyConnection struct {
 	name string
 }
 
-func (into *DirectProxyConnection) copyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstname string, srcname string) {
+func (into *DirectProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstname string, srcname string) {
 	if dst == nil {
 		log.Debugf("copy(): oops, dst is nil!")
 		return
@@ -73,7 +73,7 @@ type LoggingProxyConnection struct {
 	name string
 }
 
-func (into *LoggingProxyConnection) copyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstname string, srcname string) {
+func (into *LoggingProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstname string, srcname string) {
 	if dst == nil {
 		log.Debugf("copy(): oops, dst is nil!")
 		return
