@@ -83,7 +83,7 @@ var (
 	gProxyConnectionImpl         string
 )
 
-var myProxyConnection ProxyConnection
+var myConnectionMgr ProxyConnectionManager
 
 type cacheEntry struct {
 	hostname string
@@ -329,9 +329,9 @@ func setupLogging() {
 	}
 }
 
-func StartProxy(newconnection ProxyConnection) {
+func StartProxy(newconnection ProxyConnectionManager) {
 	// StartProxy: initialises and starts the proxy
-	// ProxyConnection: optional Implementation of ProxyConnection; if set, it ignores any configuration.
+	// ProxyConnectionManager: optional Implementation of ProxyConnectionManager; if set, it ignores any configuration.
 	flag.Parse()
 	if gListenAddrPort == "" {
 		flag.Usage()
@@ -354,15 +354,15 @@ func StartProxy(newconnection ProxyConnection) {
 
 	if newconnection != nil {
 		//TODO add type info
-		log.Debugf("Starting with ProxyConnection received: + ")
-		myProxyConnection = newconnection
+		log.Debugf("Starting with ProxyConnectionManager received: + ")
+		myConnectionMgr = newconnection
 	} else {
 		switch {
 		case gProxyConnectionImpl == "DirectProxyConnection":
-			myProxyConnection = &DirectProxyConnection{}
+			myConnectionMgr = &DirectProxyConnection{}
 			log.Debugf("started with DirectProxyConnection")
 		case gProxyConnectionImpl == "LoggingProxyConnection":
-			myProxyConnection = &LoggingProxyConnection{}
+			myConnectionMgr = &LoggingProxyConnection{}
 			log.Debugf("started with LoggingProxyConnection")
 		}
 	}
@@ -554,8 +554,7 @@ func handleDirectConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
 	}
 	log.Debugf("DIRECT|%v->%v|Connected to remote end", clientConn.RemoteAddr(), directConn.RemoteAddr())
 	incrDirectConnections()
-	go myProxyConnection.CopyProxyConnection(clientConn, directConn, "client", "directserver")
-	go myProxyConnection.CopyProxyConnection(directConn, clientConn, "directserver", "client")
+	myConnectionMgr.SpawnBiDirectionalCopy(clientConn, directConn, "client", "directserver")
 }
 
 func handleProxyConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
@@ -638,14 +637,14 @@ func handleProxyConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
 			log.Debugf("PROXY|%v->%v->%s:%d|Status from proxy=400 (Bad Request)", clientConn.RemoteAddr(), proxyConn.RemoteAddr(), ipv4, port)
 			log.Debugf("%v: Response from proxy=400", proxySpec)
 			incrProxy400Responses()
-			go myProxyConnection.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
+			go myConnectionMgr.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
 			return
 		}
 		if strings.Contains(status, "301") || strings.Contains(status, "302") && gClientRedirects == 1 {
 			log.Debugf("PROXY|%v->%v->%s:%d|Status from proxy=%s (Redirect), relaying response to client", clientConn.RemoteAddr(), proxyConn.RemoteAddr(), ipv4, port, strconv.Quote(status))
 			incrProxy300Responses()
 			fmt.Fprintf(clientConn, status)
-			go myProxyConnection.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
+			go myConnectionMgr.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
 			return
 		}
 		if strings.Contains(status, "200") == false {
@@ -670,8 +669,7 @@ func handleProxyConnection(clientConn *net.TCPConn, ipv4 string, port uint16) {
 		return
 	}
 	incrProxiedConnections()
-	go myProxyConnection.CopyProxyConnection(clientConn, proxyConn, "client", "proxyserver")
-	go myProxyConnection.CopyProxyConnection(proxyConn, clientConn, "proxyserver", "client")
+	myConnectionMgr.SpawnBiDirectionalCopy(clientConn, proxyConn, "client", "directserver")
 }
 
 func handleConnection(clientConn *net.TCPConn) {
@@ -692,6 +690,9 @@ func handleConnection(clientConn *net.TCPConn) {
 		log.Infof("handleConnection(): can not handle this connection, error occurred in getting original destination ip address/port: %+v\n", err)
 		return
 	}
+
+	//TODO evaluate ProxyConnectionManager implementation: if server then no handleDirect connection?
+
 	// If no upstream proxies were provided on the command line, assume all traffic should be sent directly
 	if gProxyServerSpec == "" {
 		handleDirectConnection(clientConn, ipv4, port)

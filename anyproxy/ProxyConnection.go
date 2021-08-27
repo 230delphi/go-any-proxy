@@ -1,6 +1,6 @@
 package anyproxy
 
-//ProxyConnection is an interface to enable multiple implementations of key proxy activity at the socket level.
+//ProxyConnectionManager is an interface to enable multiple implementations of key proxy activity at the socket level.
 // two implementations are included:
 //		1. Default: DirectProxyConnection which simply echos the traffic to the target
 //		2. LoggingProxyConnection which is a tool for debugging: echos traffic to both the target, and to session files.
@@ -20,18 +20,24 @@ func check(e error) {
 	}
 }
 
-func getUniqueFilename(srcname string) string {
-	return strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10) + srcname + "_src.stream"
+func getUniqueFilename(srcName string) string {
+	return strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10) + srcName + "_src.stream"
 }
 
-type ProxyConnection interface {
+type ProxyConnectionManager interface {
 	CopyProxyConnection(io.ReadWriteCloser, io.ReadWriteCloser, string, string)
+	SpawnBiDirectionalCopy(io.ReadWriteCloser, io.ReadWriteCloser, string, string)
 }
 type DirectProxyConnection struct {
 	name string
 }
 
-func (into *DirectProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstname string, srcname string) {
+func (into *DirectProxyConnection) SpawnBiDirectionalCopy(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstName string, srcName string) {
+	go into.CopyProxyConnection(dst, src, dstName, srcName)
+	go into.CopyProxyConnection(src, dst, srcName, dstName)
+}
+
+func (into *DirectProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstName string, srcName string) {
 	if dst == nil {
 		log.Debugf("copy(): oops, dst is nil!")
 		return
@@ -44,22 +50,22 @@ func (into *DirectProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, s
 	_, err = io.Copy(dst, src)
 	if err != nil {
 		if operr, ok := err.(*net.OpError); ok {
-			if srcname == "directserver" || srcname == "proxyserver" {
-				log.Debugf("copy(): %s->%s: Op=%s, Net=%s, Addr=%v, Err=%v", srcname, dstname, operr.Op, operr.Net, operr.Addr, operr.Err)
+			if srcName == "directserver" || srcName == "proxyserver" {
+				log.Debugf("copy(): %s->%s: Op=%s, Net=%s, Addr=%v, Err=%v", srcName, dstName, operr.Op, operr.Net, operr.Addr, operr.Err)
 			}
 			if operr.Op == "read" {
-				if srcname == "proxyserver" {
+				if srcName == "proxyserver" {
 					IncrProxyServerReadErr()
 				}
-				if srcname == "directserver" {
+				if srcName == "directserver" {
 					IncrDirectServerReadErr()
 				}
 			}
 			if operr.Op == "write" {
-				if srcname == "proxyserver" {
+				if srcName == "proxyserver" {
 					IncrProxyServerWriteErr()
 				}
-				if srcname == "directserver" {
+				if srcName == "directserver" {
 					IncrDirectServerWriteErr()
 				}
 			}
@@ -73,7 +79,12 @@ type LoggingProxyConnection struct {
 	name string
 }
 
-func (into *LoggingProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstname string, srcname string) {
+func (into *LoggingProxyConnection) SpawnBiDirectionalCopy(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstName string, srcName string) {
+	go into.CopyProxyConnection(dst, src, dstName, srcName)
+	go into.CopyProxyConnection(src, dst, srcName, dstName)
+}
+
+func (into *LoggingProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, src io.ReadWriteCloser, dstName string, srcName string) {
 	if dst == nil {
 		log.Debugf("copy(): oops, dst is nil!")
 		return
@@ -84,7 +95,7 @@ func (into *LoggingProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, 
 	}
 	var err error
 	// RK duplicate stream
-	myfilename := getUniqueFilename(srcname)
+	myfilename := getUniqueFilename(srcName)
 	log.Debugf("writing file", myfilename)
 	f, err := os.Create(myfilename)
 	check(err)
@@ -96,22 +107,22 @@ func (into *LoggingProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, 
 	check(err2)
 	if err != nil {
 		if operr, ok := err.(*net.OpError); ok {
-			if srcname == "directserver" || srcname == "proxyserver" {
-				log.Debugf("copy(): %s->%s: Op=%s, Net=%s, Addr=%v, Err=%v", srcname, dstname, operr.Op, operr.Net, operr.Addr, operr.Err)
+			if srcName == "directserver" || srcName == "proxyserver" {
+				log.Debugf("copy(): %s->%s: Op=%s, Net=%s, Addr=%v, Err=%v", srcName, dstName, operr.Op, operr.Net, operr.Addr, operr.Err)
 			}
 			if operr.Op == "read" {
-				if srcname == "proxyserver" {
+				if srcName == "proxyserver" {
 					IncrProxyServerReadErr()
 				}
-				if srcname == "directserver" {
+				if srcName == "directserver" {
 					IncrDirectServerReadErr()
 				}
 			}
 			if operr.Op == "write" {
-				if srcname == "proxyserver" {
+				if srcName == "proxyserver" {
 					IncrProxyServerWriteErr()
 				}
-				if srcname == "directserver" {
+				if srcName == "directserver" {
 					IncrDirectServerWriteErr()
 				}
 			}
