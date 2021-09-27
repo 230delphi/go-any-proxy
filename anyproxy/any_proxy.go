@@ -207,7 +207,7 @@ func init() {
 	flag.IntVar(&gSkipCheckUpstreamsReachable, "s", 0, "On startup, should we check if the upstreams are available? -s=0 means we should and if one is found to be not reachable, then remove it from the upstream list.\n")
 	flag.StringVar(&gStatsFile, "stat", gStatsFile, "Path to a file, where stats will be written.\n")
 	flag.IntVar(&gVerbosity, "v", 0, "Control level of logging. v=1 results in debugging info printed to the log.\n")
-	flag.StringVar(&gProxyConnectionImpl, "I", "DirectProxyConnection", "Choose a Connection implementation: DirectProxyConnection (default), LoggingProxyConnection, .\n")
+	flag.StringVar(&gProxyConnectionImpl, "proxyConnection", "DirectProxyConnection", "Choose a Connection implementation: DirectProxyConnection (default), LoggingProxyConnection, .\n")
 
 	dirFuncs := buildDirectors(gDirects)
 	director = getDirector(dirFuncs)
@@ -329,15 +329,18 @@ func setupLogging() {
 	}
 }
 
-func StartProxy(newconnection ProxyConnectionManager) {
-	// StartProxy: initialises and starts the proxy
-	// ProxyConnectionManager: optional Implementation of ProxyConnectionManager; if set, it ignores any configuration.
+func InitConfig() {
 	flag.Parse()
 	if gListenAddrPort == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
+}
 
+func StartProxy(newconnection ProxyConnectionManager) {
+	// StartProxy: initialises and starts the proxy
+	// ProxyConnectionManager: optional Implementation of ProxyConnectionManager; if set, it ignores any configuration.
+	InitConfig()
 	runtime.GOMAXPROCS(runtime.NumCPU() / 2)
 	setupLogging()
 	setupProfiling()
