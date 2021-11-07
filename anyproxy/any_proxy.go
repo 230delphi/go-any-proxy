@@ -81,6 +81,7 @@ var (
 	gReverseLookups              int
 	gSNIParsing                  int
 	gProxyConnectionImpl         string
+	gStdOutLogging               bool
 )
 
 var myConnectionMgr ProxyConnectionManager
@@ -172,6 +173,7 @@ func init() {
 		fmt.Fprintf(os.Stdout, "  -stat=1          Path to a file, where to write the stats file. Defaults to %s\n", gStatsFile)
 		fmt.Fprintf(os.Stdout, "  -I=DirectProxyConnection|LoggingProxyConnection  Choose a Connection implementation: DirectProxyConnection (default), LoggingProxyConnection, .\n")
 		fmt.Fprintf(os.Stdout, "  -v=1             Print debug information to logfile %s\n", gLogfile)
+		fmt.Fprintf(os.Stdout, "  -StdOutLogging=true Enable Logging to StdOut. Disabled by default.")
 		fmt.Fprintf(os.Stdout, "any_proxy should be able to achieve 2000 connections/sec with logging on, 10k with logging off (-f=/dev/null).\n")
 		fmt.Fprintf(os.Stdout, "Before starting any_proxy, be sure to change the number of available file handles to at least 65535\n")
 		fmt.Fprintf(os.Stdout, "with \"ulimit -n 65535\"\n")
@@ -192,7 +194,6 @@ func init() {
 		fmt.Fprintf(os.Stdout, "  net.ipv4.tcp_wmem = 4096 65536 16777216\n")
 		fmt.Fprintf(os.Stdout, "  net.ipv4.tcp_congestion_control = cubic\n\n")
 		fmt.Fprintf(os.Stdout, "To obtain statistics, send any_proxy signal SIGUSR1. Current stats will be printed to %v\n", gStatsFile)
-		fmt.Fprintf(os.Stdout, "Report bugs to <ryan@rchapman.org>.\n")
 	}
 	flag.StringVar(&gConfFile, "config", "", "Configuration file")
 	flag.StringVar(&gCpuProfile, "c", "", "Write cpu profile to file")
@@ -208,6 +209,7 @@ func init() {
 	flag.StringVar(&gStatsFile, "stat", gStatsFile, "Path to a file, where stats will be written.\n")
 	flag.IntVar(&gVerbosity, "v", 0, "Control level of logging. v=1 results in debugging info printed to the log.\n")
 	flag.StringVar(&gProxyConnectionImpl, "proxyConnection", "DirectProxyConnection", "Choose a Connection implementation: DirectProxyConnection (default), LoggingProxyConnection, .\n")
+	flag.BoolVar(&gStdOutLogging, "StdOutLogging", false, "Enable Logging to StdOut. Disabled by default.\n")
 
 	dirFuncs := buildDirectors(gDirects)
 	director = getDirector(dirFuncs)
@@ -324,23 +326,24 @@ func setupLogging() {
 	}
 
 	fmt.Printf("gLogfile = %s", gLogfile)
-	logfile, err := os.OpenFile(gLogfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(gLogfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatalf("Unable to open log file : %s", err)
+	} else if gStdOutLogging {
+		//log.RedirectStreams() //logrus redirects by default. to add stdout:
+		mw := io.MultiWriter(os.Stdout, logFile)
+		log.SetOutput(mw)
 	} else {
-		log.SetOutput(logfile)
-		// NOTE: non-backwards compatible change: New Log format.
-		// was:	2021/09/27 10:37:19 any_proxy.go:388: : INFO : Listening for connections on [::]:17777
-		// now:	INFO[2021-11-07T12:50:42Z] Listening for connections on [::]:17777
-		log.SetFormatter(&log.TextFormatter{
-			ForceColors:               true,
-			EnvironmentOverrideColors: true,
-			FullTimestamp:             true,
-		})
+		log.SetOutput(logFile)
 	}
-	//log.RedirectStreams() //logrus redirects by default. to add stdout:
-	//mw := io.MultiWriter(os.Stdout, logFile)
-	//log.SetOutput(mw)
+	// NOTE: non-backwards compatible change: New Log format.
+	// was:	2021/09/27 10:37:19 any_proxy.go:388: : INFO : Listening for connections on [::]:17777
+	// now:	INFO[2021-11-07T12:50:42Z] Listening for connections on [::]:17777
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors:               true,
+		EnvironmentOverrideColors: true,
+		FullTimestamp:             true,
+	})
 }
 
 func InitConfig() {
