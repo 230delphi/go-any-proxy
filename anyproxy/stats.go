@@ -32,7 +32,8 @@ package anyproxy
 
 import (
 	"fmt"
-	log "github.com/zdannar/flogger"
+	log "github.com/sirupsen/logrus"
+	"net"
 	"os"
 	"os/signal"
 	"runtime"
@@ -287,4 +288,30 @@ func setupStats() {
 			f.Close()
 		}
 	}()
+}
+
+func ReportStatistics(err error, srcName string, dstName string) {
+	if err != nil {
+		if opError, ok := err.(*net.OpError); ok {
+			if srcName == "directserver" || srcName == "proxyserver" {
+				log.Debugf("copy(): %s->%s: Op=%s, Net=%s, Addr=%v, Err=%v", srcName, dstName, opError.Op, opError.Net, opError.Addr, opError.Err)
+			}
+			if opError.Op == "read" {
+				if srcName == "proxyserver" {
+					IncrProxyServerReadErr()
+				}
+				if srcName == "directserver" {
+					IncrDirectServerReadErr()
+				}
+			}
+			if opError.Op == "write" {
+				if srcName == "proxyserver" {
+					IncrProxyServerWriteErr()
+				}
+				if srcName == "directserver" {
+					IncrDirectServerWriteErr()
+				}
+			}
+		}
+	}
 }

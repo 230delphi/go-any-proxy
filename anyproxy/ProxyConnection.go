@@ -6,7 +6,7 @@ package anyproxy
 //		2. LoggingProxyConnection which is a tool for debugging: echos traffic to both the target, and to session files.
 
 import (
-	log "github.com/zdannar/flogger"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"os"
@@ -105,29 +105,7 @@ func (into *LoggingProxyConnection) CopyProxyConnection(dst io.ReadWriteCloser, 
 	_, err = io.Copy(output, src)
 	err2 := buf2.Close()
 	check(err2)
-	if err != nil {
-		if operr, ok := err.(*net.OpError); ok {
-			if srcName == "directserver" || srcName == "proxyserver" {
-				log.Debugf("copy(): %s->%s: Op=%s, Net=%s, Addr=%v, Err=%v", srcName, dstName, operr.Op, operr.Net, operr.Addr, operr.Err)
-			}
-			if operr.Op == "read" {
-				if srcName == "proxyserver" {
-					IncrProxyServerReadErr()
-				}
-				if srcName == "directserver" {
-					IncrDirectServerReadErr()
-				}
-			}
-			if operr.Op == "write" {
-				if srcName == "proxyserver" {
-					IncrProxyServerWriteErr()
-				}
-				if srcName == "directserver" {
-					IncrDirectServerWriteErr()
-				}
-			}
-		}
-	}
+	ReportStatistics(err, srcName, dstName)
 	dst.Close()
 	src.Close()
 }

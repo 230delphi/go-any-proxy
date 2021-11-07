@@ -46,7 +46,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/namsral/flag"
-	log "github.com/zdannar/flogger"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"os"
@@ -317,16 +317,30 @@ func setupProfiling() {
 }
 
 func setupLogging() {
-	log.SetLevel(log.INFO)
+	log.New()
+	log.SetLevel(log.InfoLevel)
 	if gVerbosity != 0 {
-		log.SetLevel(log.DEBUG)
+		log.SetLevel(log.DebugLevel)
 	}
 
 	fmt.Printf("gLogfile = %s", gLogfile)
-
-	if err := log.OpenFile(gLogfile, log.FLOG_APPEND, 0644); err != nil {
+	logfile, err := os.OpenFile(gLogfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	if err != nil {
 		log.Fatalf("Unable to open log file : %s", err)
+	} else {
+		log.SetOutput(logfile)
+		// NOTE: non-backwards compatible change: New Log format.
+		// was:	2021/09/27 10:37:19 any_proxy.go:388: : INFO : Listening for connections on [::]:17777
+		// now:	INFO[2021-11-07T12:50:42Z] Listening for connections on [::]:17777
+		log.SetFormatter(&log.TextFormatter{
+			ForceColors:               true,
+			EnvironmentOverrideColors: true,
+			FullTimestamp:             true,
+		})
 	}
+	//log.RedirectStreams() //logrus redirects by default. to add stdout:
+	//mw := io.MultiWriter(os.Stdout, logFile)
+	//log.SetOutput(mw)
 }
 
 func InitConfig() {
@@ -352,8 +366,6 @@ func StartProxy(newconnection ProxyConnectionManager) {
 	if gReverseLookups == 1 {
 		gReverseLookupCache = NewReverseLookupCache()
 	}
-
-	log.RedirectStreams()
 
 	if newconnection != nil {
 		//TODO add type info
